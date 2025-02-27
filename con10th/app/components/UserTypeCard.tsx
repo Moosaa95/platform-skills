@@ -4,7 +4,7 @@ import Image from "next/image";
 
 interface SelectCardProps {
     label: string;
-    imageSrc: string;
+    imageSrc?: string;
     value: string;
     selectedValue: string;
     onChange: (value:string) => void;
@@ -13,6 +13,7 @@ interface SelectCardProps {
 
 const SelectCard = ({
     label,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     imageSrc,
     value,
     selectedValue,
@@ -26,7 +27,7 @@ const SelectCard = ({
             <CardContent className="flex items-center gap-4 p-0 cursor-pointer">
                 <Image src="" alt="" width={40} height={40} />
                 <span className="text-lg font-medium">{label}</span>
-                <RadioGroup value={selectedValue} onValueChange={onchange}>
+                <RadioGroup value={selectedValue} onValueChange={onChange}>
                     <RadioGroupItem value={value} />
                 </RadioGroup>
             </CardContent>
