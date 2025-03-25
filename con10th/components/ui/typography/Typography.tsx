@@ -19,8 +19,7 @@ export function Typography({
   
     return (
       <span
-        className={`${baseStyles[variant]} ${className}`}
-        style={{ fontSize: `${size}px` }} // Apply custom size directly
+        className={`${baseStyles[variant]} ${className}`} // Apply custom size directly
         {...props}
       >
         {children}

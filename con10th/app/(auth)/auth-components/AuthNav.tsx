@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 
-export default function Navbar() {
+export default function AuthNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-purple-100 bg-white px-[100px] py-[24px] shadow-md">
       <div className="container flex h-16 items-center justify-between">

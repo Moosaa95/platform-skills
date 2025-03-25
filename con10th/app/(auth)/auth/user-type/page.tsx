@@ -1,5 +1,5 @@
 'use client'
-import SelectCard from "@/app/components/UserTypeCard";
+import SelectCard from "@/app/(nondashboard)/components/UserTypeCard";
 import { Button } from "@/components/ui/button";
 import { Typography } from "@/components/ui/typography/Typography";
 import Link from "next/link";
