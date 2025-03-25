@@ -18,7 +18,7 @@ export interface ExpertProps {
 }
 
 export function ExpertCard({
-  id,
+  // id,
   name,
   image,
   verifiedIn,
@@ -72,10 +72,10 @@ export function ExpertCard({
   )
 }
 
-export function ExpertCardLink({ id, ...props }: ExpertProps) {
+export function ExpertCardLink({...props }: ExpertProps) {
   return (
-    <Link href={`/experts/${id}`}>
-      <ExpertCard id={id} {...props} />
+    <Link href={`/experts/2`}>
+      <ExpertCard {...props} id={"2"} />
     </Link>
   )
 }

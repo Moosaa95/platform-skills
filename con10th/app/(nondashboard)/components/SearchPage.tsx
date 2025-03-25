@@ -1,13 +1,13 @@
-import { useAppDispatch, useAppSelector } from "@/states/hooks"
-import { useSearchParams } from "next/navigation"
+// import { useAppDispatch, useAppSelector } from "@/states/hooks"
+// import { useSearchParams } from "next/navigation"
 
 export default function SearchPage() {
-    const searchParams = useSearchParams()
-    const dispatch = useAppDispatch();
+    // const searchParams = useSearchParams()
+    // const dispatch = useAppDispatch();
 
-    const isFiltersFullOpen = useAppSelector(
-        state => state.global.isFilterFullOpen
-    )
+    // const isFiltersFullOpen = useAppSelector(
+    //     state => state.global.isFilterFullOpen
+    // )
 
     const NAVBAR_HEIGHT = 50
 

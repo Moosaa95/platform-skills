@@ -2,29 +2,29 @@
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+// import { useState } from "react"
 
 
 
-const NAVIGATION = [
-  {
-    label: "Home",
-    href: "/"
-  },
-  {
-    label: "Hire a talent",
-    href: "hire"
-  },
-  {
-    label: "Jobs",
-    href: "jobs"
-  }
-]
+// const NAVIGATION = [
+//   {
+//     label: "Home",
+//     href: "/"
+//   },
+//   {
+//     label: "Hire a talent",
+//     href: "hire"
+//   },
+//   {
+//     label: "Jobs",
+//     href: "jobs"
+//   }
+// ]
 
 
 
 export default function Navbar() {
-  const [active, setActive] = useState<boolean>(false)
+  // const [active, setActive] = useState<boolean>(false)
   return (
     <header className="sticky top-0 z-50 w-full  border-purple-100 bg-white px-[100px] py-[24px] h-[100px] shadow-md">
       <div className="container flex h-16 items-center justify-between">

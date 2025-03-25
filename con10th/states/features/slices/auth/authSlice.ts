@@ -6,7 +6,7 @@ interface AuthState {
 
 
 const initialState = {
-    isAuthenticated: JSON.parse(localStorage.getItem("isAuthenticated") || "false"),
+    isAuthenticated: false,
     isLoading: true
 } as AuthState
 

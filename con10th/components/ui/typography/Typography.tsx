@@ -1,7 +1,6 @@
 export function Typography({
     children,
     variant = "primary",
-    size = 16, // Default size in pixels
     className = "",
     ...props
   }: {
