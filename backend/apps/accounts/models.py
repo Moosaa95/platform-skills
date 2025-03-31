@@ -1,21 +1,26 @@
 # python imports
 import datetime
 import random
+import base64
 
 # Django
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.utils.timezone import now
+from django.utils.timezone import now, timezone
+from django.db.models import Avg
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 
 # third parties
 from cloudinary.models import CloudinaryField
+import cloudinary
 
 # local
 from apps.accounts.manager import CustomUserManager
-from apps.services.models import Skill
+from apps.services.models import Service, Skill
 from commons.mixins import ModelMixin
-from .enums import UserRoles
+from .enums import EVENTTYPES, UserRoles, GENDERS
 # Create your models here.
 
 
@@ -57,10 +62,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, ModelMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     profile_picture = CloudinaryField('image', null=True, blank=True)
-    role = models.CharField(max_length=20, choices=UserRoles.choices, default=UserRoles.NORMAL_USER)
+    role = models.CharField(max_length=20, choices=UserRoles.choices, default=UserRoles.CLIENT_USER)
     is_approved = models.BooleanField(default=False)
     country = models.ForeignKey('Country', on_delete=models.SET_NULL, null=True)
     state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True)
+    gender = models.CharField(max_length=10, null=True, blank=True, choices=GENDERS.choices)
 
     
     objects = CustomUserManager()
@@ -126,7 +132,7 @@ class OTPVerification(ModelMixin):
         """
         Verify the OTP for a user and mark them as verified.
         """
-        otp_log = OTPLog.create_otp_log(user, 'failed')
+        otp_log = OTPLog.create_otp_log(user=user)
         try:
             otp_instance = cls.objects.get(user=user)
 
@@ -144,7 +150,7 @@ class OTPVerification(ModelMixin):
             user.is_active = True  # Update user verification status
             user.save(update_fields=['is_active'])
             
-            OTPLog.update_otp_log(otp_log.id, 'success')
+            OTPLog.update_otp_log(otp_log.id, EVENTTYPES.VERIFIED)
 
             return True, "OTP verified successfully."
 
@@ -171,8 +177,7 @@ class OTPVerification(ModelMixin):
         return f"OTP for {self.user.email} - Verified: {self.is_verified}"
 
 
-
-class UserProfile(ModelMixin):
+class ClientProfile(ModelMixin):
     """
     UserProfile model extends the CustomUser with additional personal details.
 
@@ -183,67 +188,406 @@ class UserProfile(ModelMixin):
         date_of_birth (DateField): Date of birth.
         bio (TextField, optional): Brief description or portfolio summary.
     """
-    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name="profile")
-    phone_number = models.CharField(max_length=20)
+    client = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name="client_profile")
+    profile_picture = CloudinaryField('image', null=True, blank=True)
     address = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     bio = models.TextField(null=True, blank=True)
+    total_spent = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    has_agreed_to_terms = models.BooleanField(default=False)  # 
+    is_profile_complete = models.BooleanField(default=False)  
+    services_purchased = models.PositiveIntegerField(default=0)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    completion_percentage = models.IntegerField(default=0)  
+
+
 
     def __str__(self):
-        return self.user.email
+        return self.client.email
+    
 
+    @classmethod
+    def get_fields(cls):
+        fields  = [
+            "client__first_name",
+            "client__last_name",
+            "client__email",
+            "client__gender",
+            "client__role",
+            "bio",
+            "address",
+            "profile_picture",
+        ]
+        return fields
 
-class SkilledUserProfile(ModelMixin):
-    """
-    Profile for skilled users (freelancers).
-    """
-    user = models.OneToOneField("CustomUser", on_delete=models.CASCADE, related_name="freelancer_profile")
-    skills = models.ManyToManyField(Skill, related_name="freelancers")  # ✅ Connect freelancer to multiple skills
-    experience_years = models.IntegerField(default=0)
-    bio = models.TextField(blank=True, null=True)
-    rating = models.FloatField(default=0.0)  # ✅ Average rating from client reviews
-    completed_jobs = models.PositiveIntegerField(default=0)
-    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    portfolio = models.JSONField(default=list, blank=True, null=True)  # ✅ Store images, links, etc.
-    is_profile_complete = models.BooleanField(default=False)  # ✅ Flag to indicate profile completion
-
-    def __str__(self):
-        return f"{self.user.email} - {self.rating}⭐"
-
-
-    def calculate_profile_completion(self):
+    @classmethod
+    def create_profile(cls, user, **kwargs):
         """
-        Calculate the percentage of profile completion.
+        Create and return a new ClientProfile for the given user.
         """
-        required_fields = ["experience_years", "bio", "hourly_rate"]
-        optional_fields = ["portfolio"]
-        many_to_many_fields = ["skills"]
+        return cls.objects.create(client=user, **kwargs)
 
-        filled_fields = sum(1 for field in required_fields if getattr(self, field))
-        filled_fields += sum(1 for field in optional_fields if getattr(self, field))  # Optional but contributes to score
-        filled_fields += 1 if self.skills.exists() else 0  # ✅ Check if at least one skill is added
+    @classmethod
+    def update_profile(cls, user, **kwargs):
+        """
+        Update the existing ClientProfile for the user with given kwargs.
+        """
+        profile = cls.objects.filter(client=user).update(**kwargs)
+        return profile
+    
+    @classmethod
+    def update_client_profile(cls, user_id, **data):
+        """
+        Update client profile with provided data.
+        Handles both user fields and profile fields.
+        """
+        try:
+            
+            profile = cls.objects.select_related('client').get(client_id=user_id)
+            
+            # Extract user fields
+            user_fields = {'first_name', 'last_name', 'email', 'gender'}
+            user_data = {k: v for k, v in data.items() if k in user_fields}
+            profile_data = {k: v for k, v in data.items() if k not in user_fields}
+            
+            # Update user if needed
+            if user_data:
+                for field, value in user_data.items():
+                    setattr(profile.client, field, value)
+                profile.client.save(update_fields=list(user_data.keys()))
+            
+            # Update profile fields
+            for field, value in profile_data.items():
+                setattr(profile, field, value)
+            
+            # Update completion status
+            cls.update_completion(profile)
+            profile.save()
+            
+            return profile
+            
+        except cls.DoesNotExist:
+            return None
+    
 
-        total_fields = len(required_fields) + len(optional_fields) + len(many_to_many_fields)
-        completion_percentage = int((filled_fields / total_fields) * 100)
+    @classmethod
+    def update_photo(cls, user_id, photo=None):
+        """
+        Update profile photo.
+        If photo is None, removes the current photo.
+        """
+        try:
+            profile = cls.objects.get(client_id=user_id)
+            
+            # Validate photo if provided
+            if photo:
+                cls._validate_photo(photo)
+                profile.profile_picture = photo
+            else:
+                # Remove existing photo if any
+                if profile.profile_picture:
+                    public_id = profile.profile_picture.public_id
+                    if public_id:
+                        cloudinary.uploader.destroy(public_id)
+                    profile.profile_picture = None
+            
+            cls.update_completion(profile)
+            profile.save()
+            
+            return profile
+            
+        except cls.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def _validate_photo(photo):
+        """Validate photo file size and type."""
+        if photo.size > 2 * 1024 * 1024:  # 2MB
+            raise ValidationError("File size exceeds 2MB limit")
+            
+        allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+        if photo.content_type not in allowed_types:
+            raise ValidationError("File type not supported. Please upload JPEG or PNG")
+
+    @classmethod
+    def get_client_profile(cls, **kwargs):
+        """
+        Retrieve the ClientProfile for the given user.
+        """
+        obj = kwargs.pop("obj", None)
+        try:
+            if obj:
+                profile = cls.objects.get(**kwargs)
+            else:
+                profile = cls.objects.filter(**kwargs).values(*cls.get_fields())[0]
+        except cls.DoesNotExist:
+            profile = None
+        return profile
+
+    @classmethod
+    def update_completion(cls, profile):
+        """Update profile completion percentage and status."""
+        if not profile:
+            return 0
+        
+        completion_fields = ['profile_picture', 'bio']
+        
+        # Count completed fields in ClientProfile
+        completed = sum(
+            1 for field in completion_fields if getattr(profile, field, None) not in [None, ""]
+        )
+
+        
+        if getattr(profile.client, "gender", None) not in [None, ""]:
+            completed += 1  
+
+        total_fields = len(completion_fields) + 1  # Include gender in total fields count
+
+        # Calculate percentage
+        completion_percentage = int((completed / total_fields) * 100) if total_fields > 0 else 0
+
+        # Update and save profile changes
+        cls.objects.filter(id=profile.id).update(
+            completion_percentage=completion_percentage,
+            is_profile_complete=completion_percentage >= 80
+        )
 
         return completion_percentage
 
-    def update_profile_completion_status(self):
-        """
-        Update the profile completion flag based on required fields.
-        """
-        if self.calculate_profile_completion() == 100:
-            self.is_profile_complete = True
-        else:
-            self.is_profile_complete = False
-        self.save(update_fields=["is_profile_complete"])
 
-    def save(self, *args, **kwargs):
+class ExpertUserProfile(ModelMixin):
+    """
+    Profile for skilled users (freelancers).
+    """
+    expert = models.OneToOneField("CustomUser", on_delete=models.CASCADE, related_name="expert_profile", null=True, blank=True) #TODO: remove the null later after clearing the db
+    skills = models.ManyToManyField(Skill, related_name="experts")
+    bio = models.TextField(blank=True, null=True)
+    rating = models.FloatField(default=0.0)  # 
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    completed_services = models.PositiveIntegerField(default=0)
+    portfolio = models.JSONField(default=list, blank=True, null=True)  
+    is_profile_complete = models.BooleanField(default=False)  # 
+    has_agreed_to_terms = models.BooleanField(default=False)  # 
+    title = models.CharField(max_length=100)
+    years_of_experience = models.PositiveIntegerField(default=0)
+    availability = models.BooleanField(default=True)
+    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    reviews_count = models.PositiveIntegerField(default=0)
+    completion_percentage = models.IntegerField(default=0)  
+
+
+    # def __str__(self):
+    #     return f"{self.expert.email} - {self.rating}⭐"
+    
+    @classmethod
+    def get_fields(cls):
         """
-        Override save method to update profile completion status automatically.
+        Returns a list of all field names in the model.
         """
-        self.update_profile_completion_status()
-        super().save(*args, **kwargs)
+        return [
+            "expert__first_name",
+            "expert__last_name",
+            "expert__email",
+            "expert__gender",
+            "expert__country",
+            "skills__name",
+            "skills__code",
+            "bio",
+            "rating",
+            "phone_number",
+            "completed_services",
+            "price",
+            "portfolio",
+            "is_profile_complete",
+            "has_agreed_to_terms",
+            "title",
+            "years_of_experience",
+            "availability",
+            "total_earnings",
+            "reviews_count"
+
+        ]
+        # return [field.name for field in cls._meta.fields]
+    
+    @classmethod
+    def create_profile(cls, user, **kwargs):
+        """
+        Create and return a new expert profile for the given user.
+        """
+        return cls.objects.create(expert=user, **kwargs)
+
+    # @classmethod
+    # def update_profile(cls, user, **kwargs):
+    #     """
+    #     Update the existing expert profile for the user with given kwargs.
+    #     """
+    #     profile = cls.objects.filter(user=user).update(**kwargs)
+    #     return profile
+    @classmethod
+    def update_profile(cls, user_id, **kwargs):
+        """
+        Updates an expert profile for the given user ID, including skills, services, and portfolio.
+        Also updates profile completion percentage.
+        """
+        print("USER ID", user_id)
+        with transaction.atomic():
+            # Fetch profile and ensure user exists
+            profile = cls.objects.select_related("expert").filter(expert_id=user_id).first()
+            if not profile or not profile.expert:
+                return None  
+
+            # Extract related fields for CustomUser
+            user_fields = ["first_name", "last_name", "gender", "email", "country"]
+            user_data = {field: kwargs.pop(field) for field in user_fields if field in kwargs}
+
+            # Extract related fields for ExpertUserProfile
+            skills = kwargs.pop("skills", None)
+            services = kwargs.pop("services", None)
+            portfolio = kwargs.pop("portfolio", None)
+
+            # Update CustomUser fields
+            if user_data:
+                CustomUser.objects.filter(id=profile.expert.id).update(**user_data)
+
+            # Update profile fields
+            if kwargs:
+                cls.objects.filter(id=profile.id).update(**kwargs)
+
+            # Update ManyToManyField (skills)
+            print("SKILLS SHOW", skills)
+            if skills:
+                skill_ids = Skill.objects.filter(id__in=[s for s in skills])
+                profile.skills.set(skill_ids)
+
+            # Bulk update/create services
+            if services:
+                service_objs = [
+                    Service(
+                        expert_id=profile.id,
+                        skill_id=s["skillId"],
+                        title=s["title"],
+                        description=s["description"],
+                        price=s["price"],
+                        is_active=s.get("isActive", True),
+                    )
+                    for s in services
+                ]
+                Service.objects.bulk_create(service_objs, ignore_conflicts=True)
+
+            # Handle portfolio (validate and update JSONField)
+            if portfolio:
+                try:
+                    validated_portfolio = [
+                        {"title": item["title"], "image": item["image"]}
+                        for item in portfolio if "title" in item and "image" in item and base64.b64decode(item["image"], validate=True)
+                    ]
+                    profile.portfolio = validated_portfolio
+                    profile.save(update_fields=["portfolio"])
+                except Exception:
+                    pass  # Avoid breaking the update if portfolio processing fails
+
+            # Update profile completion percentage
+            completion_percentage = cls.update_completion(profile)
+
+            return profile  # Return updated profile object
+
+
+
+    @classmethod
+    def get_expert_profile(cls, **kwargs):
+        """
+        Retrieve the ClientProfile for the given user.
+        """
+        print("FIELDS", cls.get_fields())
+        obj = kwargs.pop("obj", None)
+        try:
+            if obj:
+                profile = cls.objects.get(**kwargs)
+            else:
+                profile = cls.objects.filter(**kwargs).values(*cls.get_fields())[0]
+        except cls.DoesNotExist:
+            profile = None
+        return profile
+
+
+    @classmethod
+    def update_completion(cls, profile):
+        """Update expert profile completion percentage and status."""
+        if not profile:
+            return 0
+        
+        # Fields required for a complete expert profile
+        required_fields = ["profile_picture", "bio", "title", "years_of_experience", "skills", "portfolio"]
+
+        # Count completed fields in ExpertUserProfile
+        completed = sum(
+            1 for field in required_fields if getattr(profile, field, None) not in [None, "", []]
+        )
+
+        # Check required fields in CustomUser (linked via OneToOneField)
+        user_fields = ["first_name", "last_name", "gender", "country"]
+        completed += sum(1 for field in user_fields if getattr(profile.expert, field, None) not in [None, ""])
+
+        # Total fields count
+        total_fields = len(required_fields) + len(user_fields)
+
+        # Calculate percentage
+        completion_percentage = int((completed / total_fields) * 100) if total_fields > 0 else 0
+
+        # Update and save profile completion status
+        cls.objects.filter(id=profile.id).update(
+            completion_percentage=completion_percentage,
+            is_profile_complete=completion_percentage >= 80
+        )
+
+        return completion_percentage
+
+    @classmethod
+    def top_experts(cls, limit=10, order_by_field="rating"):
+        """
+        Returns the top experts, optimized with caching.
+        """
+        cache_key = f"top_experts_{order_by_field}_{limit}"
+        top_experts = cache.get(cache_key)
+
+        if not top_experts:
+            top_experts = (
+                cls.objects
+                .select_related('expert')
+                .prefetch_related('skills')
+                .annotate(avg_rating=Avg('rating'))
+                .order_by(f"-{order_by_field}")[:limit]
+                .values('expert__first_name', 'rating', 'completed_jobs', 'total_earnings', 'reviews_count', 'skills__name')
+            )
+            cache.set(cache_key, list(top_experts), timeout=3600)  # Cache for 1 hour
+
+        return top_experts
+    
+
+    @classmethod
+    def fetch_experts(cls, conditions=None, count=None):
+        queryset = None
+
+        if conditions and count:
+            queryset = cls.objects.filter(conditions).order_by("-created_at")[: int(count)].values(*cls.get_fields)
+            return queryset
+
+        if conditions:
+            queryset = cls.objects.filter(conditions).order_by("-created_at").values(*cls.get_fields)
+            return queryset
+
+
+        if count:
+            queryset = cls.objects.filter(created_at__startswith=timezone.now().date()).order_by("-created_at")[: int(count)].values(*cls.get_fields)
+
+            return queryset
+
+    # def save(self, *args, **kwargs):
+    #     """
+    #     Override save method to update profile completion status automatically.
+    #     """
+    #     self.update_profile_completion_status()
+    #     super().save(*args, **kwargs)
     
 
 # TODO: to be moved to general.modelss
@@ -268,20 +612,27 @@ class OTPLog(ModelMixin):
     """
     Log OTP events (sent, verified, failed, etc.).
     """
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    event_type = models.CharField(max_length=50, choices=[('sent', 'Sent'), ('verified', 'Verified'), ('failed', 'Failed')])
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='otp_logs'
+    )
+    event_type = models.CharField(max_length=50, choices=EVENTTYPES, default=EVENTTYPES.FAILED)
     timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    device_info = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
         return f"{self.user.email} - {self.event_type} at {self.timestamp}"
     
 
     @classmethod
-    def create_otp_log(cls, user, event_type):
+    def create_otp_log(cls, user, event_type=EVENTTYPES.FAILED):
         """
         Create a new OTP log entry for the user.
         """
-        cls.objects.create(user=user, event_type=event_type)
+        print("CREATE ", user)
+        return cls.objects.create(user=user, event_type=event_type)
     
     @classmethod
     def get_otp_logs(cls, user):
@@ -301,3 +652,8 @@ class OTPLog(ModelMixin):
     
         except cls.DoesNotExist:
             return None
+        
+
+
+
+    

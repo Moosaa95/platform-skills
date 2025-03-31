@@ -6,13 +6,24 @@ from accounts.views import (
     CustomTokenVerifyView
 )
 
-from .endpoints import (
-    ApproveSkilledUserView,
+from .auth import (
     PasswordResetRequestView,
     PasswordResetVerifyView,
     ResendOTPView,
     UserRegisterView,
-    VerifyOTPView
+    VerifyOTPView,
+)
+
+from .endpoints import (
+    # Client
+    GetClientProfileView,
+    UpdateClientProfileView,
+    UploadClientProfilePhotoView,
+
+    # expert
+    GetExpertProfile,
+    UpdateExpertProfile,
+    UploadExpertProfilePhoto
 )
 
 
@@ -24,12 +35,23 @@ AUTH_URLPATTERNS = [
 ]
 
 USER_URLPATTERNS = [
-    path("approve-skilled-user/<int:pk>/", ApproveSkilledUserView.as_view(), name="approve-skilled-user"),
-    path("register/", UserRegisterView.as_view(), name="register"),
-    path("password-reset/request/", PasswordResetRequestView.as_view(), name="password-reset-request"),
-    path("password-reset/verify/", PasswordResetVerifyView.as_view(), name="password-reset-verify"),
-    path("resend-otp/", ResendOTPView.as_view(), name="resend-otp"),
-    path("verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
+    # path("approve-skilled-user/<int:pk>/", ApproveSkilledUserView.as_view(), name="approve-skilled-user"),
+    path("register", UserRegisterView.as_view(), name="register"),
+    path("password_reset/request", PasswordResetRequestView.as_view(), name="password-reset-request"),
+    path("password_reset/verify", PasswordResetVerifyView.as_view(), name="password-reset-verify"),
+    path("resend_otp", ResendOTPView.as_view(), name="resend_otp"),
+    path("verify_otp", VerifyOTPView.as_view(), name="verify_otp"),
+
+    # client
+    path("get_client", GetClientProfileView.as_view(), name="get_client"),
+    path('update_client_profile', UpdateClientProfileView.as_view(), name='client-profile'),
+    path('update_client_photo', UploadClientProfilePhotoView.as_view(), name='profile-photo'),
+
+
+    # expert
+    path("get_expert", GetExpertProfile.as_view(), name="get_expert"),
+    path('update_expert_profile', UpdateExpertProfile.as_view(), name='expert-profile'),
+    path('update_expert_photo', UploadExpertProfilePhoto.as_view(), name='profile-photo'),
 ]
 
 urlpatterns = AUTH_URLPATTERNS + USER_URLPATTERNS 

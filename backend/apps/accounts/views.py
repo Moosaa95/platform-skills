@@ -19,12 +19,15 @@ class CustomTokenObtainView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
 
+            
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
 
             if access_token and refresh_token:
                 set_auth_cookies(response, access_token, refresh_token)
-
+            
+            response.data["status"] = True
+        print("RESPONSE ", response)
         return response
 
 

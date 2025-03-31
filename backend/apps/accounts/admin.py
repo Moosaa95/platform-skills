@@ -1,9 +1,10 @@
 from django.contrib import admin
 from .models import (
         CustomUser, Country, 
-        State, UserProfile,
+        State, ClientProfile,
         OTPVerification,
-        SkilledUserProfile
+        ExpertUserProfile,
+        OTPLog
     )
 
 # Register your models here.
@@ -48,11 +49,11 @@ class StateAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
-@admin.register(UserProfile)
+@admin.register(ClientProfile)
 class UserProfile(admin.ModelAdmin):
-    list_display = ['user', 'phone_number', 'address', 'date_of_birth']
-    search_fields = ['user', 'phone_number', 'address', 'date_of_birth']
-    ordering = ['user']
+    list_display = ['client', 'phone_number', 'address', 'date_of_birth']
+    search_fields = ['client', 'phone_number', 'address', 'date_of_birth']
+    ordering = ['client']
     filter_horizontal = [] # This is used to display many-to-many fields in a horizontal manner.
 
 
@@ -64,9 +65,14 @@ class OTPVerificationAdmin(admin.ModelAdmin):
     filter_horizontal = []
 
 
-@admin.register(SkilledUserProfile)
+@admin.register(OTPLog)
+class OTPLogAdmin(admin.ModelAdmin):
+    list_display = ['user', 'event_type', 'created_at']
+
+
+@admin.register(ExpertUserProfile)
 class SkilledUserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user']
-    search_fields = ['user']
-    ordering = ['user']
+    list_display = ['expert']
+    search_fields = ['expert']
+    ordering = ['expert']
     filter_horizontal = []

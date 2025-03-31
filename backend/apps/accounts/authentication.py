@@ -13,14 +13,17 @@ class CustomJWTAuthentication(JWTAuthentication):
             header = self.get_header(request) # Get the header from the request
 
             if header is None:
-                raw_token = self.COOKIES.get(settings.AUTH_ACCESS_TOKEN_NAME) # Get the token from the cookies
+                # raw_token = self.COOKIES.get(settings.AUTH_ACCESS_TOKEN_NAME) # Get the token from the cookies
+                raw_token = request.COOKIES.get(settings.AUTH_ACCESS_TOKEN_NAME) # Get the token from the cookies
             else:
                 raw_token = self.get_raw_token(header)
             
             if raw_token is None:
                 return None
             
+            
             validated_token = self.get_validated_token(raw_token) # Validate the token
+
 
             return self.get_user(validated_token), validated_token # Return the user and the token
         
@@ -28,6 +31,5 @@ class CustomJWTAuthentication(JWTAuthentication):
             return None
         
         except Exception as e:
-
             return None
     

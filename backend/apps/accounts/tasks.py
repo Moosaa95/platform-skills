@@ -10,6 +10,19 @@ def send_otp_email_task(email, first_name, otp):
     """
     subject = "Your OTP for Account Verification"
     message = f"Hello {first_name},\n\nYour OTP for verifying your account is: {otp}\n\nUse this OTP to activate your account."
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+    except Exception as e:
+        print(f"Failed to send OTP email to {email}: {str(e)}")
+
+
+@shared_task
+def send_approved_email_task(email, first_name, otp):
+    """
+    Celery task to send approved account message asynchronously.
+    """
+    subject = "Your Account has been Approved"
+    message = f"Hello {first_name}"
     print("=========TASK")
     print(email, first_name, otp)
     try:

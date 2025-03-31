@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth import get_user_model
 from django.core import exceptions
 from django.contrib.auth.password_validation import validate_password
@@ -8,10 +9,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 
 from accounts.models import (
+    ClientProfile,
     OTPVerification
 )
 
-from accounts.tasks import send_otp_email_task
+from accounts.tasks import send_approved_email_task, send_otp_email_task
 from apps.accounts.enums import UserRoles
 # from djoser.serializers import UserCreateSerializer as DjoserUserCreateSerializer
 # from .models import UserProfile
@@ -65,7 +67,7 @@ class ResendOTPSerializer(serializers.Serializer):
 
         new_otp = OTPVerification.generate_otp(otp_instance.user)
 
-        send_otp_email_task(otp_instance.user, new_otp)
+        send_otp_email_task(email=otp_instance.user, first_name=otp_instance.user.first_name,  otp=new_otp)
 
         return {"message": "A new OTP has been sent to your email."}
     
@@ -104,6 +106,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         
+        user = self.user
+        profile = getattr(user, "client_profile", None) or getattr(self.user, "expert_profile", None)
+        role = getattr(user, "role")
+        user_id = getattr(user, "id")
+        data["profile_complete"] = getattr(profile, "is_profile_complete", False)
+        data["has_agreed_to_terms"] = getattr(profile, "has_agreed_to_terms", False)
+        data["role"] = role
+        data["user_id"] =  user_id
+
+        print("DATA", data)
+
         # Fetch user verification status from OTPVerification model
         if not hasattr(self.user, "otp_verification") or not self.user.otp_verification.is_verified:
             raise serializers.ValidationError("User is not verified. Please verify your account using the OTP sent to your email.")
@@ -111,7 +124,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
-class ApproveSkilledUserSerializer(serializers.Serializer):
+class ApproveExpertUserSerializer(serializers.Serializer):
     """
     Serializer for approving skilled users.
     """
@@ -121,7 +134,7 @@ class ApproveSkilledUserSerializer(serializers.Serializer):
         fields = ["id", "is_approved"]
 
     def update(self, instance, validated_data):
-        if instance.role != "skilled_user":
+        if instance.role.lower() != "expert_user":
             raise serializers.ValidationError("Only skilled users can be approved.")
 
         if instance.is_approved:
@@ -130,8 +143,8 @@ class ApproveSkilledUserSerializer(serializers.Serializer):
         instance.is_approved = True
         instance.save(update_fields=["is_approved"])
 
-        otp = OTPVerification.generate_otp(instance)
-        send_otp_email_task.delay(instance.email, instance.first_name, otp)
+        # otp = OTPVerification.generate_otp(instance)
+        # send_approved_email_task.delay(instance.email, instance.first_name, otp)
 
         return instance
 
@@ -153,6 +166,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
         #  Generate OTP for password reset
         otp = OTPVerification.generate_otp(user)
+        print("OTP", otp)
         send_otp_email_task.delay(user.email, user.first_name, otp)
         return value
 
@@ -188,3 +202,189 @@ class PasswordResetVerifySerializer(serializers.Serializer):
         otp_instance.save(update_fields=["otp", "is_verified"])
 
         return data
+
+
+# class ClientProfileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ClientProfile
+#         fields = [
+#             'id', 'profile_picture', 'address', 'date_of_birth', 
+#             'bio', 'phone_number', 'total_spent', 
+#             'is_profile_complete', 'completion_percentage'
+#         ]
+#         read_only_fields = ['total_spent', 'is_profile_complete', 'completion_percentage']
+
+# class ClientProfileUpdateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ClientProfile
+#         fields = [
+#             'profile_picture', 'address', 'date_of_birth', 
+#             'bio', 'phone_number'
+#         ]
+    
+#     def update(self, instance, validated_data):
+#         # Update the profile with validated data
+#         for attr, value in validated_data.items():
+#             setattr(instance, attr, value)
+#         instance.save()
+        
+#         # Calculate completion after update
+#         instance.calculate_completion()
+        
+#         return instance
+
+class ClientProfileSetupResponseSerializer(serializers.Serializer):
+    first_name = serializers.CharField(source="client.first_name")
+    last_name = serializers.CharField(source="client.last_name")
+    email = serializers.EmailField(source="client.email")
+    role = serializers.EmailField(source="client.role")
+    bio = serializers.CharField()
+    address = serializers.CharField()
+    profile_picture = serializers.ImageField()
+    phone_number = serializers.CharField()
+    gender = serializers.CharField(source="client.gender")
+    completion_percentage = serializers.IntegerField()
+
+
+class ClientRequestSerializer(serializers.Serializer):
+    client_id = serializers.UUIDField()
+
+
+# class ClientProfileSerializer(serializers.ModelSerializer):
+#     """Serializer for client profile with user details."""
+#     client_id = serializers.CharField(source='client.id', required=False)
+#     first_name = serializers.CharField(source='client.first_name', required=False)
+#     last_name = serializers.CharField(source='client.last_name', required=False)
+#     gender = serializers.CharField(source='client.gender', required=False)
+#     country = serializers.CharField(source='client.country', required=False)
+#     bio = serializers.TextField(required=False)
+#     email = serializers.EmailField(source='client.email', read_only=True)
+    
+#     class Meta:
+#         model = ClientProfile
+#         fields = [
+#             'id', 'first_name', 'last_name', 'email', 
+#             'address', 'date_of_birth', 'bio', 'phone_number', 
+#             'gender', 'country', 'profile_picture', 'client_id',
+#             'total_spent', 'has_agreed_to_terms', 
+#             'is_profile_complete', 'completion_percentage'
+#         ]
+#         read_only_fields = [
+#             'total_spent', 'completion_percentage', 
+#             'is_profile_complete'
+#         ]
+class ClientProfileSerializer(serializers.Serializer):
+    """Serializer for client profile with user details."""
+    
+    id = serializers.UUIDField(read_only=True)
+    client_id = serializers.UUIDField(required=False)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    gender = serializers.CharField(required=False)
+    country = serializers.CharField(required=False)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(read_only=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    date_of_birth = serializers.DateField(required=False)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    
+    total_spent = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
+    has_agreed_to_terms = serializers.BooleanField(required=False)
+    is_profile_complete = serializers.BooleanField(read_only=True)
+    completion_percentage = serializers.IntegerField(read_only=True)
+
+    
+class ClientProfilePhotoSerializer(serializers.ModelSerializer):
+    """Serializer for profile photo updates."""
+    class Meta:
+        model = ClientProfile
+        fields = ['id', 'profile_picture', 'completion_percentage', 'is_profile_complete']
+        read_only_fields = ['completion_percentage', 'is_profile_complete']
+
+
+class UploadClientProfilePhotoSerializer(serializers.Serializer):
+    client_id = serializers.UUIDField(required=True)
+    profile_picture = serializers.ImageField(required=True)
+
+
+class ExpertFilterRequestSerializer(serializers.Serializer):
+    expert_id = serializers.UUIDField()
+    skills = serializers.ListField(child=serializers.IntegerField(), required=False) 
+    bio = serializers.CharField(allow_blank=True, required=False)
+    rating = serializers.FloatField(required=False)
+    phone_number = serializers.CharField(allow_blank=True, required=False)
+    completed_services = serializers.IntegerField(required=False)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    portfolio = serializers.JSONField(required=False)
+    is_profile_complete = serializers.BooleanField(required=False)
+    has_agreed_to_terms = serializers.BooleanField(required=False)
+    title = serializers.CharField(allow_blank=True, required=False)
+    years_of_experience = serializers.IntegerField(required=False)
+    availability = serializers.BooleanField(required=False)
+    total_earnings = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    reviews_count = serializers.IntegerField(required=False)
+    created_at = serializers.DateTimeField(required=False)
+    
+
+class ExpertDetailRequestSerializer(serializers.Serializer):
+    expert_id = serializers.UUIDField()
+
+
+class ExpertProfileSetupResponseSerializer(serializers.Serializer):
+    expert_id = serializers.UUIDField()
+    first_name = serializers.CharField(source="expert.first_name")
+    last_name = serializers.CharField(source="expert.last_name")
+    email = serializers.EmailField(source="expert.email")
+    role = serializers.EmailField(source="expert.role")
+    skills = serializers.ListField(child=serializers.IntegerField(), required=False, source="skills.name") 
+    bio = serializers.CharField(allow_blank=True, required=False)
+    rating = serializers.FloatField(required=False)
+    phone_number = serializers.CharField(allow_blank=True, required=False)
+    completed_services = serializers.IntegerField(required=False)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    portfolio = serializers.JSONField(required=False)
+    is_profile_complete = serializers.BooleanField(required=False)
+    has_agreed_to_terms = serializers.BooleanField(required=False)
+    title = serializers.CharField(allow_blank=True, required=False)
+    years_of_experience = serializers.IntegerField(required=False)
+    availability = serializers.BooleanField(required=False)
+    total_earnings = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    reviews_count = serializers.IntegerField(required=False)
+    created_at = serializers.DateTimeField(required=False)
+
+
+class ExpertUserProfileSerializer(serializers.Serializer):
+    # id = serializers.UUIDField(read_only=True)
+    expert_id = serializers.UUIDField()
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    gender = serializers.CharField(required=False)
+    # country = serializers.CharField(required=False)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    rating = serializers.FloatField(required=False)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    completed_services = serializers.IntegerField(required=False)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    portfolio = serializers.ListField(child=serializers.DictField(), required=False)  
+    is_profile_complete = serializers.BooleanField(required=False)
+    has_agreed_to_terms = serializers.BooleanField(required=False)
+    title = serializers.CharField(required=False, allow_blank=True)
+    years_of_experience = serializers.IntegerField(required=False)
+    availability = serializers.BooleanField(required=False)
+    total_earnings = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    reviews_count = serializers.IntegerField(required=False)
+
+    # ManyToMany and ForeignKey fields
+    skills = serializers.ListField(child=serializers.DictField(),required=False)
+    services = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+    def validate_skills(self, value):
+        print("VALUE", value)
+        try:
+            return [uuid.UUID(skill["id"]) for skill in value]
+        except (KeyError, ValueError):
+            raise serializers.ValidationError("Invalid skills format. Expected list of objects with 'id' as UUID.")

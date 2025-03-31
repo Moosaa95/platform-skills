@@ -14,3 +14,4 @@ AUTH_COOKIE_PATH = "/"  # Available across the entire domain
 AUTH_COOKIE_SECURE = True  # Set to True in production (requires HTTPS)
 AUTH_COOKIE_HTTP_ONLY = True  # Prevents JavaScript access (helps mitigate XSS)
 AUTH_COOKIE_SAMESITE = "Lax"  # "Lax" allows safe cross-site use, "Strict" prevents CSRF risks
+# AUTH_COOKIE_SAMESITE = "None"  # "Lax" allows safe cross-site use, "Strict" prevents CSRF risks

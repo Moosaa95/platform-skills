@@ -21,7 +21,11 @@ DEBUG = True
 
 # ALLOWED_HOSTS = []
 
-SECRET_KEY = getenv('DJANGO_SECRET_KEY', get_random_secret_key())
+SECRET_KEY = getenv('DJANGO_SECRET_KEY', 'django-insecure-k@!0depti1sh5n!w%kop8xkkvqe#*%&ett^*$!u#z6r6zm&4w8')
+
+print("SECRET", SECRET_KEY)
+
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = getenv('DEBUG', 'False') == 'True'
@@ -49,7 +53,7 @@ THIRD_PARTY_APPS = [
     'djoser',
     'rest_framework_simplejwt',
     'django_celery_results',
-    'debug_toolbar',
+    'debug_toolbar',                            
     # 'django_filters',
     # 'channels',
 ]
@@ -64,14 +68,14 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# INSTALLED_APPS = [
-#     'django.contrib.admin',
-#     'django.contrib.auth',
-#     'django.contrib.contenttypes',
-#     'django.contrib.sessions',
-#     'django.contrib.messages',
-#     'django.contrib.staticfiles',
-# ]
+
+
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
@@ -84,6 +88,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+# SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'  # or your chosen backend
+# SESSION_COOKIE_NAME = 'sessionid'
+# SESSION_COOKIE_SECURE = False  # in development; True in production with HTTPS
+# SESSION_COOKIE_DOMAIN = None  # or the proper domain if needed
+
 
 ROOT_URLCONF = 'coronith.urls'
 
@@ -148,6 +158,9 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+
+
+# DRF_STANDARDIZED_ERRORS = {"EXCEPTION_FORMATTER_CLASS": "common.exceptions.APIExceptionFormatter"}
 # DJOSER
 # DJOSER = {
 #     # 'LOGIN_FIELD': 'email',
@@ -257,7 +270,7 @@ REST_FRAMEWORK = {
         'apps.accounts.authentication.CustomJWTAuthentication'
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # ✅ Allows unauthenticated registration
+        'rest_framework.permissions.IsAuthenticated', 
     ],
     # YOUR SETTINGS
     # "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
@@ -297,6 +310,24 @@ EMAIL_HOST_USER="02e6a49694816f"
 EMAIL_HOST_PASSWORD="6f385cd3dc6f5b"
 SENDER_EMAIL="02e6a49694816f"
 EMAIL_PORT=2525
+
+# # EMAIL_PORT = 587
+# EMAIL_PORT = getenv("EMAIL_PORT")
+# EMAIL_HOST_USER = getenv("EMAIL_HOST_USER")
+# EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD")
+# SENDER_EMAIL = getenv("SENDER_EMAIL")
+# EMAIL_HOST="sandbox.smtp.mailtrap.io"
+# EMAIL_HOST_USER="02e6a49694816f"
+# EMAIL_HOST_PASSWORD="6f385cd3dc6f5b"
+# SENDER_EMAIL="02e6a49694816f"
+# EMAIL_PORT=2525
+
+# EMAIL_HOST = "smtp.gmail.com"
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = "moosaabdullahi45@gmail.com"
+# EMAIL_HOST_PASSWORD = "lajjszpnamwvdtbc"  # Use the generated App Password
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 
