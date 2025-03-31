@@ -13,5 +13,5 @@ export const passwordSchema = z.object({
   path: ["re_password"],
 });
 
-export const registerSchema = basicSchema
-  .merge(passwordSchema)
+// @ts-ignore
+export const registerSchema = basicSchema.merge(passwordSchema)

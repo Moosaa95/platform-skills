@@ -1,9 +1,9 @@
 "use client"
-import { Search } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
+// import { Search } from "lucide-react"
+// import { Checkbox } from "@/components/ui/checkbox"
+// import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import type { FiltersState } from "@/states/features/slices/global/globalSlice"
 
 interface FilterSidebarProps {
@@ -36,7 +36,7 @@ export default function FilterSidebar({ filters, onFilterChange }: FilterSidebar
             </div>
 
             {/* AVAILABILy */}
-            <div className="mb-6 space-y-4">
+            {/* <div className="mb-6 space-y-4">
                 <h3 className="text-sm lg:text-lg font-[600] text-primary-700">Availability</h3>
                 <div className="space-y-2 border-[1px] border-gray-200 py-5 px-2 gap-3 rounded-[6px]">
                     <div className="flex items-center space-x-2">
@@ -56,11 +56,11 @@ export default function FilterSidebar({ filters, onFilterChange }: FilterSidebar
                         <Label htmlFor="busy">Busy</Label>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* LOCATION */}
              {/* Location */}
-            <div className="mb-6 space-y-4">
+            {/* <div className="mb-6 space-y-4">
                 <h3 className="text-sm lg:text-lg font-[600] text-primary-700">Location</h3>
                 <div className="relative">
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-accent-color-700" />
@@ -71,10 +71,10 @@ export default function FilterSidebar({ filters, onFilterChange }: FilterSidebar
                     onChange={(e) => onFilterChange("location", e.target.value, null)}
                 />
                 </div>
-            </div>
+            </div> */}
 
             {/* Ratings */}
-            <div className="mb-6 space-y-4">
+            {/* <div className="mb-6 space-y-4">
                 <h3 className="text-sm lg:text-lg font-[600] text-primary-700">Ratings</h3>
                 <div className="space-y-2 border-[1px] border-gray-200 py-5 px-2 gap-3 rounded-[6px]">
                 <div className="flex items-center space-x-2">
@@ -109,8 +109,8 @@ export default function FilterSidebar({ filters, onFilterChange }: FilterSidebar
                     />
                     <Label htmlFor="3-stars">3 Stars</Label>
                 </div>
-            </div>
-        </div>
+            </div> */}
+        {/* </div> */}
     </div>
     )
 }

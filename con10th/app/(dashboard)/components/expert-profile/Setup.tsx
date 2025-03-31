@@ -347,7 +347,7 @@ export default function ExpertProfileSetup({id}:{id: string}) {
   
         <div className="flex flex-col items-center mb-6">
           <p className="text-sm text-gray-500 mb-2">Upload a clear profile photo (Optional)</p>
-          <ProfilePhotoUpload onPhotoUpload={handlePhotoUpload} initialImage={profileImageUrl} />
+          <ProfilePhotoUpload onPhotoUpload={handlePhotoUpload} initialImage={profileImageUrl || undefined} />
         </div>
   
         <div className="space-y-4">

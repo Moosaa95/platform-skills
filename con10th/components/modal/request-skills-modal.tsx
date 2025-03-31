@@ -36,6 +36,8 @@ export const RequestSkillsModal = () => {
 
   const handleSubmitNewSkill = async (values: FormValues) => {
     setIsSubmitting(true)
+    console.log(values);
+    
 
     try {
       // In a real app, replace with actual API call

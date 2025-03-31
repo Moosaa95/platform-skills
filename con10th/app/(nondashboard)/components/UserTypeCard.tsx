@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroupItem } from "@/components/ui/radio-group";
 import Image from "next/image";
 interface SelectCardProps {
   label: string;
   imageSrc?: string;
   value: string;
   selectedValue: string;
-  onChange: (value: string) => void;
+  // onChange: (value: string) => void;
 }
 
 const SelectCard = ({
@@ -14,7 +14,7 @@ const SelectCard = ({
   imageSrc,
   value,
   selectedValue,
-  onChange
+  // onChange
 }: SelectCardProps) => {
   return (
     <Card
@@ -23,7 +23,7 @@ const SelectCard = ({
           ? "border-primary-700 ring-2 ring-primary-600" 
           : "border-primary-400 hover:border-primary-600"
       }`}
-      onClick={() => onChange(value)}
+      // onClick={() => onChange(value)}
     >
       <CardContent className="flex items-center justify-between w-full p-0">
         <div className="flex items-center gap-4">

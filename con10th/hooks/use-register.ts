@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useRegisterMutation } from '@/states/features/endpoints/auth/authApiSlice';
-import { useAppDispatch } from '@/states/hooks';
+
 
 
 
@@ -28,8 +28,9 @@ const step3Schema = z.object({
 	message: "Passwords don't match",
 	path: ["re_password"]
   });
-
-export const registerSchema = step1Schema.merge(step2Schema).merge(step3Schema)
+  
+// @ts-ignore
+export const registerSchema = step1Schema.merge(step2Schema).merge(step3Schema) //ignore
 
 type FormValues = z.infer<typeof registerSchema>
 

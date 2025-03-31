@@ -61,14 +61,14 @@ export default function Register() {
                             selectedValue={field.value || ""}
                             label="I am a client"
                             value="client"
-                            onChange={field.onChange}
+                            // onChange={field.onChange}
                             imageSrc="/assets/images/userType/client.png"
                             />
                             <SelectCard
                             selectedValue={field.value || ""}
                             label="I am an expert"
                             value="expert"
-                            onChange={field.onChange}
+                            // onChange={field.onChange}
                             imageSrc="/assets/images/userType/expert.png"
                             />
                         </RadioGroup>
