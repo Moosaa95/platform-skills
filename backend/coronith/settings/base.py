@@ -31,7 +31,7 @@ print("SECRET", SECRET_KEY)
 # DEBUG = getenv('DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost', 'https://platform-skills-xih5.vercel.app/').split(',')
 
 
 # Application definition

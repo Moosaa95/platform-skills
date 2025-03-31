@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  app:
+    build: . 
+    volumes:
+      - .:/platform-django
+    ports:
+      - 8000:8000
+    image: platform-app:platform-django-app
+    container_name: django_container
+    command: python managa.py runserver 0.0.0.0:8000
