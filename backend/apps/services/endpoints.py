@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
-
+from rest_framework.permissions import AllowAny
 from .serializers import ServiceRequestSerializer, ServiceSerializer, SkillSerializer
 
 
@@ -109,6 +109,7 @@ class SkillList(APIView):
     """
     POST: Retrieve a list of all skills.
     """
+    permission_classes = [AllowAny]  # Anyone can register
     def post(self, request):
         skills = Skill.list_all_skills()
         print("SKILLS", skills)
