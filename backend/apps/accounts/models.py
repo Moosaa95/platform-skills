@@ -110,6 +110,7 @@ class OTPVerification(ModelMixin):
         otp_instance.otp = str(random.randint(100000, 999999))
         otp_instance.created_at = now()  # Update timestamp when OTP is refreshed
         otp_instance.last_sent_at = now()
+        print("OTP", otp_instance, otp_instance.otp)
         otp_instance.save(update_fields=['otp', 'created_at', 'last_sent_at'])
         OTPLog.objects.create(user=user, event_type='sent')
         return otp_instance.otp  # Return the OTP for further processing (e.g., email sending)
