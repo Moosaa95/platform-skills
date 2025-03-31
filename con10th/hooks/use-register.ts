@@ -1,50 +1,108 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+"use client";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useRegisterMutation } from '@/states/features/endpoints/auth/authApiSlice';
+import { useAppDispatch } from '@/states/hooks';
+
+
+
+// zod schemas
+const step1Schema = z.object({
+	role: z.enum(["client", "expert"])
+})
+
+const step2Schema = z.object({
+	first_name: z.string().min(2, "First name must be at least 2 characters"),
+	last_name: z.string().min(2, "Last name must be at least 2 characters"),
+	email: z.string().email("Invalid email address"),
+})
+
+const step3Schema = z.object({
+	password: z.string().min(8, "Password must be at least 8 characters"),
+	re_password: z.string(),
+  }).refine(data => data.password === data.re_password, {
+	message: "Passwords don't match",
+	path: ["re_password"]
+  });
+
+export const registerSchema = step1Schema.merge(step2Schema).merge(step3Schema)
+
+type FormValues = z.infer<typeof registerSchema>
 
 export default function useRegister() {
 	const router = useRouter();
-	const [register, { isLoading }] = useRegisterMutation();
+	const [register, {isLoading}] = useRegisterMutation();
+	const [currentStep, setCurrentStep] = useState(1);
+	const [formData, setFormData] = useState<Partial<FormValues>>({})
 
-	const [formData, setFormData] = useState({
-		first_name: '',
-		last_name: '',
-		email: '',
-		password: '',
-		re_password: '',
+	
+	const schemaForStep = () => {
+		switch (currentStep) {
+		  case 1: return step1Schema;
+		  case 2: return step2Schema;
+		  case 3: return step3Schema;
+		  default: return registerSchema;
+		}
+	  };
+	
+	const form = useForm({
+		resolver: zodResolver(schemaForStep()),
+		defaultValues: {
+			...formData
+		}
 	});
 
-	const { first_name, last_name, email, password, re_password } = formData;
+	console.log("FORM", form)
 
-	const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = event.target;
-
-		setFormData({ ...formData, [name]: value });
+	const handleNext = async () => {
+		const isValid = await form.trigger();
+		if (isValid) {
+		  const currentValues = form.getValues();
+		  setFormData(prev => ({ ...prev, ...currentValues }));
+		  setCurrentStep(prev => prev + 1);
+		  
+		}
+		console.log("FORM NEXT", formData);
+		
 	};
 
-	const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
 
-		register({ first_name, last_name, email, password, re_password })
-			.unwrap()
-			.then(() => {
-				toast.success('Please check email to verify account');
-				router.push('/auth/login');
-			})
-			.catch(() => {
-				toast.error('Failed to register account');
-			});
+	const handleBack = () => {
+		setCurrentStep(prev => Math.max(prev - 1, 1));
 	};
+
+	const onSubmit = async (finalData: FormValues) => {
+		try {
+			const completeData = {
+			...formData,
+			password: finalData.password
+			};
+		
+			const {message, status, user_email} = await register(completeData).unwrap();
+			
+			if (status) {
+				localStorage.setItem("pendingVerificationEmail", user_email)
+				router.push('/auth/verify-otp');
+			}
+			else {
+				toast.error(message)
+			}
+		} catch (error) {
+			console.error("Registration error:", error); // Add error logging
+			toast.error('Failed to register account');
+		}
+	  };
 
 	return {
-		first_name,
-		last_name,
-		email,
-		password,
-		re_password,
+		form,
+		currentStep,
 		isLoading,
-		onChange,
-		onSubmit,
+		handleNext,
+		handleBack,
+		onSubmit
 	};
 }

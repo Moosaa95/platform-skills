@@ -30,17 +30,20 @@ const baseQuery = fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_HOST}/api`,
     credentials: 'include',
     prepareHeaders: async (headers, {getState}) => {
-        console.log('getting state=======', getState());
         
         const csrftoken = getCookie('csrftoken');
         if (csrftoken) {
             headers.set('X-CSRFToken', csrftoken);
             
         }
-        console.log('CRSF', csrftoken);
+
+    
         return headers;
     },
 })
+
+console.log("BASE QUERY", baseQuery);
+
 
 
 const baseQueryWithReauth: BaseQueryFn<
@@ -50,8 +53,11 @@ FetchBaseQueryError
 > = async (args, api, extraOptions) => {
     await mutex.waitForUnlock();
     let result = await baseQuery(args, api, extraOptions);
-
+    console.log("API SLICE", result, result.error, args, api, extraOptions);
+    
     if (result.error && result.error.status === 401) {
+        console.log("401", result.error.status);
+        
         if (!mutex.isLocked()) {
             const release = await mutex.acquire()
             try {
@@ -64,8 +70,10 @@ FetchBaseQueryError
                 api, 
                 extraOptions
                 );
+                console.log("REFRESH RESULT", refreshResult, refreshResult.data);
+                
                 if (refreshResult.data){
-                    api.dispatch(setAuth)
+                    api.dispatch(setAuth())
 
                     result = await baseQuery(args, api, extraOptions)
                 } else {
@@ -87,5 +95,6 @@ FetchBaseQueryError
 export const apiSlice = createApi({
     reducerPath: 'api',
     baseQuery: baseQueryWithReauth,
+    tagTypes: ["User", "Auth"],
     endpoints: builder => ({})
 })

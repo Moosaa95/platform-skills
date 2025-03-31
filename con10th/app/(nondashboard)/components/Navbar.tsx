@@ -36,7 +36,7 @@ export default function Navbar() {
         <div className="flex gap-4 font-[400] text-[20px]" >
           <Link href="/">Home</Link>
           <Link href="">How it works</Link>
-          <Link href="/auth/register">Hire an Expert</Link>
+          <Link href="/auth/register" className="text-accent-color-700">Hire an Expert</Link>
         </div>
 
 

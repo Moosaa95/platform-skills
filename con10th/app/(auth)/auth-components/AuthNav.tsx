@@ -35,7 +35,7 @@ export default function AuthNavbar() {
             <Button className="bg-[#FF4D00] text-white hover:bg-[#FF4D00]/90">Join Com10th</Button>
           </Link>
         </div> */}
-        <div className="flex items-cetner gap-5">
+        {/* <div className="flex items-cetner gap-5">
           <Link href="/login">
             <Button variant="outline" className="text-sm bg-transparent hover:bg-white hover:text-primary-700 rounded-lg">
               Login
@@ -44,7 +44,7 @@ export default function AuthNavbar() {
           <Link href="/join">
             <Button variant="secondary" className="bg-[#FF4D00] text-white hover:bg-[#FF4D00]/90">Join Con10th</Button>
           </Link>
-        </div>
+        </div> */}
       </div>
     </header>
   )

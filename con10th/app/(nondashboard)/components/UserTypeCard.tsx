@@ -1,38 +1,46 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Image from "next/image";
-
 interface SelectCardProps {
-    label: string;
-    imageSrc?: string;
-    value: string;
-    selectedValue: string;
-    onChange: (value:string) => void;
+  label: string;
+  imageSrc?: string;
+  value: string;
+  selectedValue: string;
+  onChange: (value: string) => void;
 }
-
 
 const SelectCard = ({
-    label,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    imageSrc,
-    value,
-    selectedValue,
-    onChange
-}:SelectCardProps) => {
-    return (
-        <Card
-            className={`w-64 border rounded-lg shadow-md p-4 flex items-center gap-4 transition ${selectedValue === value ? "border-blue-500 ring-2 ring-blue-500" : "border-gray-300"}`}
-            onClick={() => onChange(value)}
-        >
-            <CardContent className="flex items-center gap-4 p-0 cursor-pointer">
-                <Image src="" alt="" width={40} height={40} />
-                <span className="text-lg font-medium">{label}</span>
-                <RadioGroup value={selectedValue} onValueChange={onChange}>
-                    <RadioGroupItem value={value} />
-                </RadioGroup>
-            </CardContent>
-        </Card>
-    )
-}
+  label,
+  imageSrc,
+  value,
+  selectedValue,
+  onChange
+}: SelectCardProps) => {
+  return (
+    <Card
+      className={`w-[270px] h-[96px] border-[1px] rounded-lg shadow-md p-4 flex items-center gap-4 transition cursor-pointer ${
+        selectedValue === value 
+          ? "border-primary-700 ring-2 ring-primary-600" 
+          : "border-primary-400 hover:border-primary-600"
+      }`}
+      onClick={() => onChange(value)}
+    >
+      <CardContent className="flex items-center justify-between w-full p-0">
+        <div className="flex items-center gap-4">
+          {imageSrc && (
+            <Image src={imageSrc} alt={label} width={48} height={48} />
+          )}
+          <span className="text-lg font-[500]">{label}</span>
+        </div>
+        <RadioGroupItem
+          value={value}
+          checked={selectedValue === value}
+          className="h-6 w-6 text-primary-700"
+        />
+      </CardContent>
+    </Card>
+  );
+};
 
 export default SelectCard;
+

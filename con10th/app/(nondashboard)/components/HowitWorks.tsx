@@ -55,8 +55,8 @@ const expertSteps: Step[] = [
 
 export default function HowItWorks() {
   return (
-    <section className="w-full py-16 border-2">
-      <div className="container px-4 mx-auto">
+    <section className="w-full flex justify-center items-center py-16 border-2">
+      <div className="w-full container px-4 mx-auto">
         <motion.h2
           className="text-3xl md:text-4xl font-bold text-primary-900 text-center mb-16"
           initial={{ opacity: 0, y: -20 }}
@@ -67,24 +67,26 @@ export default function HowItWorks() {
         </motion.h2>
 
         {/* For Client Section */}
-        <StepsSection
-          sectionTitle="For Client"
-          steps={clientSteps}
-          arrowColor="text-orange-500"
-          borderColor="border-orange-500"
-          textColor="text-orange-500"
-          delay={0.1}
-        />
+        <div className="w-full mx-auto flex justify-center items-center flex-col">
+          <StepsSection
+            sectionTitle="For Client"
+            steps={clientSteps}
+            arrowColor="text-orange-500"
+            borderColor="border-orange-500"
+            textColor="text-orange-500"
+            delay={0.1}
+          />
 
-        {/* For Experts Section */}
-        <StepsSection
-          sectionTitle="For Experts"
-          steps={expertSteps}
-          arrowColor="text-orange-500"
-          borderColor="border-orange-500"
-          textColor="text-orange-500"
-          delay={0.3}
-        />
+          {/* For Experts Section */}
+          <StepsSection
+            sectionTitle="For Experts"
+            steps={expertSteps}
+            arrowColor="text-orange-500"
+            borderColor="border-orange-500"
+            textColor="text-orange-500"
+            delay={0.3}
+          />
+        </div>
       </div>
     </section>
   )

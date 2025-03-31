@@ -4,7 +4,8 @@ import { useRef } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ExpertCardLink, ExpertProps } from "./cards/TopExpertCard"
+import { ExpertCardLink } from "./cards/TopExpertCard"
+import { ExpertProps } from "./cards/ExpertCard"
 
 export default function TopExperts() {
   const experts: ExpertProps[] = [

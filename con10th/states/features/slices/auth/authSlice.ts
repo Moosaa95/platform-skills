@@ -2,12 +2,14 @@ import {createSlice} from "@reduxjs/toolkit"
 interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
+    pendingVerificationEmail: string | null
 }
 
 
 const initialState = {
     isAuthenticated: false,
     isLoading: true,
+    pendingVerificationEmail: null
 } as AuthState
 
 
@@ -25,12 +27,24 @@ const authSlice = createSlice({
         },
         finishInitialLoad: state => {
             state.isLoading = false;
-        }
+        },
+        setPendingVerificationEmail: (state, action) => {
+            state.pendingVerificationEmail = action.payload
+          },
+          clearPendingVerificationEmail: (state) => {
+            state.pendingVerificationEmail = null
+          }
     }
 })
 
 
-export const {setAuth, logout, finishInitialLoad} = authSlice.actions;
+export const {
+    setAuth, 
+    logout, 
+    finishInitialLoad, 
+    setPendingVerificationEmail, 
+    clearPendingVerificationEmail 
+} = authSlice.actions;
 
 export default authSlice.reducer;
 
