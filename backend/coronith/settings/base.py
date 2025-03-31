@@ -73,6 +73,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 INTERNAL_IPS = [
     # ...
     "127.0.0.1",
+    "redis://red-cvli5npr0fns73ckuepg"
     # ...
 ]
 
@@ -332,7 +333,7 @@ EMAIL_PORT=2525
 
 
 # CELERY SETTINGS
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://red-cvli5npr0fns73ckuepg:6379")
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # save Celery task results in Django's database
 CELERY_RESULT_BACKEND = "django-db"
