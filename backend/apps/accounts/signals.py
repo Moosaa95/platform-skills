@@ -64,6 +64,7 @@ def create_otp_for_new_user(sender, instance, created, **kwargs):
         # print("INNER OTP=====", instance, dir(instance))
         # if instance.role == UserRoles.NORMAL_USER:
         otp = OTPVerification.generate_otp(instance)
+        print("OTP", otp)
         send_otp_email_task.delay(instance.email, instance.first_name, otp)
 
 
