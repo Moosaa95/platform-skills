@@ -26,8 +26,7 @@ const clientSteps: Step[] = [
   {
     number: 3,
     title: "Get Work Done",
-    description:
-      "Once You Find The Right Expert, Kick Off Your Project With Confidence And Bring Your Ideas To Life.",
+    description: "Once You Find The Right Expert, Kick Off Your Project With Confidence And Bring Your Ideas To Life.",
   },
 ]
 
@@ -42,8 +41,7 @@ const expertSteps: Step[] = [
   {
     number: 2,
     title: "Get Discovered",
-    description:
-      "Let Clients Find You Based On Your Expertise—No Need To Bid Or Compete For Jobs.",
+    description: "Let Clients Find You Based On Your Expertise—No Need To Bid Or Compete For Jobs.",
   },
   {
     number: 3,
@@ -55,10 +53,10 @@ const expertSteps: Step[] = [
 
 export default function HowItWorks() {
   return (
-    <section className="w-full flex justify-center items-center py-16 border-2">
-      <div className="w-full container px-4 mx-auto">
+    <section className="w-full py-16">
+      <div className="container mx-auto px-4">
         <motion.h2
-          className="text-3xl md:text-4xl font-bold text-primary-900 text-center mb-16"
+          className="text-3xl md:text-4xl font-bold text-primary-700 text-center mb-16"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -66,26 +64,12 @@ export default function HowItWorks() {
           How It Works
         </motion.h2>
 
-        {/* For Client Section */}
-        <div className="w-full mx-auto flex justify-center items-center flex-col">
-          <StepsSection
-            sectionTitle="For Client"
-            steps={clientSteps}
-            arrowColor="text-orange-500"
-            borderColor="border-orange-500"
-            textColor="text-orange-500"
-            delay={0.1}
-          />
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* For Client Section */}
+          <StepsSection sectionTitle="For Client" steps={clientSteps} delay={0.1} />
 
           {/* For Experts Section */}
-          <StepsSection
-            sectionTitle="For Experts"
-            steps={expertSteps}
-            arrowColor="text-orange-500"
-            borderColor="border-orange-500"
-            textColor="text-orange-500"
-            delay={0.3}
-          />
+          <StepsSection sectionTitle="For Experts" steps={expertSteps} delay={0.3} />
         </div>
       </div>
     </section>
@@ -96,75 +80,61 @@ export default function HowItWorks() {
 interface StepsSectionProps {
   sectionTitle: string
   steps: Step[]
-  arrowColor: string     // e.g., "text-orange-500"
-  borderColor: string    // e.g., "border-orange-500"
-  textColor: string      // e.g., "text-orange-500"
-  delay: number          // Delay for the section animation
+  delay: number // Delay for the section animation
 }
 
-function StepsSection({
-  sectionTitle,
-  steps,
-  arrowColor,
-  borderColor,
-  textColor,
-  delay,
-}: StepsSectionProps) {
+function StepsSection({ sectionTitle, steps, delay }: StepsSectionProps) {
   return (
     <motion.div
-      className="mb-20"
+      className="mb-8"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
       viewport={{ once: true }}
     >
-      <motion.h3
-        className={`text-xl font-semibold ${textColor} text-center mb-10`}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: delay + 0.2 }}
-      >
-        {sectionTitle}
-      </motion.h3>
+      {/* Section container with border */}
+      <div className="rounded-lg p-6">
+        <motion.h3
+          className="text-xl font-semibold text-accent-color-700 text-center mb-8"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: delay + 0.2 }}
+        >
+          {sectionTitle}
+        </motion.h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {steps.map((step, index) => {
-          const isLastStep = index === steps.length - 1
-          return (
-            <motion.div
-              key={step.number}
-              className="flex flex-col items-center md:items-start"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: delay + index * 0.2 }}
-              viewport={{ once: true }}
-            >
-              {/* Step Number + Arrow */}
-              <div className="relative mb-6">
-                <div
-                  className={`w-16 h-16 rounded-full border-2 ${borderColor} flex items-center justify-center ${textColor} text-2xl font-bold`}
-                >
-                  {step.number}
-                </div>
-                {!isLastStep && (
-                  <div className="hidden md:flex absolute top-1/2 left-full items-center -translate-y-1/2">
-                    <div className="w-[400px] h-0.5 bg-orange-500" />
-                    <ArrowRight className={`${arrowColor} -ml-1`} />
+        {/* Steps container - horizontal layout */}
+        <div className="flex flex-col md:flex-row justify-between items-start">
+          {steps.map((step, index) => {
+            const isLastStep = index === steps.length - 1
+            return (
+              <div key={step.number} className="flex flex-col items-center w-full md:w-1/3 px-4 mb-8 md:mb-0">
+                {/* Step number and arrow */}
+                <div className="flex items-center w-full justify-center mb-6">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full border border-accent-color-700 flex items-center justify-center text-accent-color-700 text-xl font-medium">
+                      {step.number}
+                    </div>
+
+                    {!isLastStep && (
+                      <div className="hidden md:flex items-center absolute top-1/2 left-full -translate-y-1/2">
+                        <div className="w-[250px] h-0.5 bg-orange-300 relative">
+                          <ArrowRight className="text-orange-500 absolute -right-2 -translate-y-1/2 top-1/2" size={16} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Step Title & Description */}
-              <h4 className="text-xl font-semibold text-primary-900 mb-3 text-center md:text-left">
-                {step.title}
-              </h4>
-              <p className="text-gray-600 text-center md:text-left">
-                {step.description}
-              </p>
-            </motion.div>
-          )
-        })}
+                {/* Step content */}
+                <h4 className="text-xl font-medium text-primary-700 mb-2 text-center">{step.title}</h4>
+                <p className="text-base text-gray-600 text-center">{step.description}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </motion.div>
   )
 }
+

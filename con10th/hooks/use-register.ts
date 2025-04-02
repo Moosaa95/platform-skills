@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useRegisterMutation } from '@/states/features/endpoints/auth/authApiSlice';
 
@@ -28,7 +28,7 @@ const step3Schema = z.object({
 	message: "Passwords don't match",
 	path: ["re_password"]
   });
-  
+
 // @ts-ignore
 export const registerSchema = step1Schema.merge(step2Schema).merge(step3Schema) //ignore
 
@@ -36,8 +36,10 @@ type FormValues = z.infer<typeof registerSchema>
 
 export default function useRegister() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+    const roleFromQuery = searchParams.get("role");
 	const [register, {isLoading}] = useRegisterMutation();
-	const [currentStep, setCurrentStep] = useState(1);
+	const [currentStep, setCurrentStep] = useState(roleFromQuery ? 2 : 1);
 	const [formData, setFormData] = useState<Partial<FormValues>>({})
 
 	
@@ -53,7 +55,12 @@ export default function useRegister() {
 	const form = useForm({
 		resolver: zodResolver(schemaForStep()),
 		defaultValues: {
-			...formData
+			role: roleFromQuery || "",
+			first_name: "",
+			last_name: "",
+			email: "",
+			password: "",
+			re_password: "",
 		}
 	});
 

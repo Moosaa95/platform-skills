@@ -7,8 +7,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useRegister } from "@/hooks"
+import { Suspense } from "react"
 
-export default function Register() {
+function RegisterInner() {
     const { form, currentStep, isLoading, handleNext, handleBack, onSubmit } = useRegister();
 
 
@@ -61,14 +62,12 @@ export default function Register() {
                             selectedValue={field.value || ""}
                             label="I am a client"
                             value="client"
-                            // onChange={field.onChange}
                             imageSrc="/assets/images/userType/client.png"
                             />
                             <SelectCard
                             selectedValue={field.value || ""}
                             label="I am an expert"
                             value="expert"
-                            // onChange={field.onChange}
                             imageSrc="/assets/images/userType/expert.png"
                             />
                         </RadioGroup>
@@ -167,3 +166,11 @@ export default function Register() {
     )
 }
 
+
+export default function Register() {
+    return (
+        <Suspense>
+            <RegisterInner />
+        </Suspense>
+    )
+}

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 export default function Layout({ children }:{children: ReactNode}) {
     const NAVBARHEIGHT = 50
@@ -11,6 +12,7 @@ export default function Layout({ children }:{children: ReactNode}) {
             >
                 {children}
             </main>
+            <Footer />
         </div>
     )
 }

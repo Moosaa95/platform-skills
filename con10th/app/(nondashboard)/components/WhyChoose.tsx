@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { User, MessageSquare, DollarSign } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function WhyChooseSection() {
   return (
@@ -48,15 +48,15 @@ export default function WhyChooseSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button className="bg-accent-color-700 hover:bg-accent-color-800 text-primary-50 px-8 py-4 gap-3 md:text-lg rounded-full h-auto w-full sm:min-w-[220px]">
+              <Link href="" className="text-center bg-accent-color-700 hover:bg-accent-color-800 text-primary-50 px-8 py-4 gap-3 md:text-lg rounded-full h-auto w-full sm:min-w-[220px]">
                 Find Experts
-              </Button>
-              <Button
-                variant="outline"
-                className="border-primary-200 bg-primary-50 text-primary-700 px-8 py-4 rounded-full h-auto w-full sm:min-w-[220px] md:text-lg"
+              </Link>
+              <Link
+                className="text-center border-primary-200 bg-primary-100 hover:bg-primary-200 text-primary-700 px-8 py-4 rounded-full h-auto w-full sm:min-w-[220px] md:text-lg"
+                href={"/auth/register?role=expert"}
               >
                 Become an Expert
-              </Button>
+              </Link>
             </div>
 
           </div>

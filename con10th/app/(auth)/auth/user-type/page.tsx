@@ -26,6 +26,7 @@ export default function UserType() {
                             imageSrc={option.imageSrc}
                             value={option.value}
                             selectedValue={selectedValue}
+                            
                         />
                     ))}
                 </RadioGroup>

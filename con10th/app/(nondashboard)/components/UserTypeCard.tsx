@@ -6,7 +6,7 @@ interface SelectCardProps {
   imageSrc?: string;
   value: string;
   selectedValue: string;
-  // onChange: (value: string) => void;
+  // onChangeCard: (value: string) => void;
 }
 
 const SelectCard = ({
@@ -14,7 +14,7 @@ const SelectCard = ({
   imageSrc,
   value,
   selectedValue,
-  // onChange
+  // onChangeCard
 }: SelectCardProps) => {
   return (
     <Card
@@ -23,7 +23,7 @@ const SelectCard = ({
           ? "border-primary-700 ring-2 ring-primary-600" 
           : "border-primary-400 hover:border-primary-600"
       }`}
-      // onClick={() => onChange(value)}
+      // onClick={() => onChangeCard(value)}
     >
       <CardContent className="flex items-center justify-between w-full p-0">
         <div className="flex items-center gap-4">
@@ -35,6 +35,7 @@ const SelectCard = ({
         <RadioGroupItem
           value={value}
           checked={selectedValue === value}
+          onClick={(e) => e.stopPropagation()}
           className="h-6 w-6 text-primary-700"
         />
       </CardContent>
